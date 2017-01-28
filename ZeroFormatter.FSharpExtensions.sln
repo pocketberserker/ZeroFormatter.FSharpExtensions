@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroFormatter.FSharpExtensions", "src\ZeroFormatter.FSharpExtensions\ZeroFormatter.FSharpExtensions.csproj", "{DABDC3EF-7ACD-4B33-A346-C56949410EDB}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ZeroFormatter.FSharpExtensions.Tests", "tests\ZeroFormatter.FSharpExtensions.Tests\ZeroFormatter.FSharpExtensions.Tests.fsproj", "{B2B72A28-3CB8-4CA8-A5F4-FEDBF27F1200}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DABDC3EF-7ACD-4B33-A346-C56949410EDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DABDC3EF-7ACD-4B33-A346-C56949410EDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DABDC3EF-7ACD-4B33-A346-C56949410EDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DABDC3EF-7ACD-4B33-A346-C56949410EDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2B72A28-3CB8-4CA8-A5F4-FEDBF27F1200}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2B72A28-3CB8-4CA8-A5F4-FEDBF27F1200}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2B72A28-3CB8-4CA8-A5F4-FEDBF27F1200}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2B72A28-3CB8-4CA8-A5F4-FEDBF27F1200}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
