@@ -1,2 +1,2 @@
-# ZeroFormatter Extensions for F#
+# ZeroFormatter Extensions for FSharp
 
