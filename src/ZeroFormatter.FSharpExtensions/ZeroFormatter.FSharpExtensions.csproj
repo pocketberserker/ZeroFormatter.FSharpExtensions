@@ -53,6 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DynamicFSharpUnionFormatter.cs" />
     <Compile Include="Internal\DynamicAssembly.cs" />
     <Compile Include="Segments\DynamicAssemblyHolder.cs" />
     <Compile Include="DynamicRecordFormatter.cs" />

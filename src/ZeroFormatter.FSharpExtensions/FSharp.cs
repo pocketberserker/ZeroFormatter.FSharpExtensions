@@ -16,10 +16,11 @@ namespace ZeroFormatter
             Formatter.AppendFormatterResolver(t =>
             {
 
+                var resolverType = typeof(TTypeResolver);
+
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(FSharpOption<>))
                 {
                     var vt = t.GetGenericArguments()[0];
-                    var resolverType = typeof(TTypeResolver);
                     var formatter =
                         (vt.IsValueType ? typeof(FSharpOptionStructFormatter<,>) : typeof(FSharpOptionObjectFormatter<,>))
                             .MakeGenericType(resolverType, vt);
@@ -32,7 +33,13 @@ namespace ZeroFormatter
                 if (FSharpType.IsRecord(t, FSharpOption<BindingFlags>.Some(BindingFlags.Public)))
                 {
                     return typeof(DynamicRecordFormatter).GetMethod("Create")
-                        .MakeGenericMethod(new[] { typeof(DefaultResolver), t }).Invoke(null, null);
+                        .MakeGenericMethod(new[] { resolverType, t }).Invoke(null, null);
+                }
+
+                if (FSharpType.IsUnion(t, FSharpOption<BindingFlags>.Some(BindingFlags.Public)))
+                {
+                    return typeof(DynamicFSharpUnionFormatter).GetMethod("Create")
+                        .MakeGenericMethod(new[] { resolverType, t }).Invoke(null, null);
                 }
 
                 return null;
