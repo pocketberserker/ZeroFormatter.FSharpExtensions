@@ -4,7 +4,7 @@ using ZeroFormatter.Internal;
 
 namespace ZeroFormatter.Extensions
 {
-    public class FSharpOptionStructFormatter<TTypeResolver, T> : Formatter<TTypeResolver, FSharpOption<T>>
+    internal class FSharpOptionStructFormatter<TTypeResolver, T> : Formatter<TTypeResolver, FSharpOption<T>>
         where T : struct
         where TTypeResolver : ITypeResolver, new()
     {
@@ -60,7 +60,7 @@ namespace ZeroFormatter.Extensions
         }
     }
 
-    public class FSharpOptionObjectFormatter<TTypeResolver, T> : Formatter<TTypeResolver, FSharpOption<T>>
+    internal class FSharpOptionObjectFormatter<TTypeResolver, T> : Formatter<TTypeResolver, FSharpOption<T>>
         where T : class
         where TTypeResolver : ITypeResolver, new()
     {
