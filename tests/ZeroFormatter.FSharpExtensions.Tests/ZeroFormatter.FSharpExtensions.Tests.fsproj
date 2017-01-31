@@ -56,6 +56,7 @@
     <Compile Include="RecordFormatterTest.fs" />
     <Compile Include="OptionFormatterTest.fs" />
     <Compile Include="DiscriminatedUnionFormatterTest.fs" />
+    <Compile Include="SequenceFormatterTest.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

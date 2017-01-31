@@ -61,6 +61,7 @@
     <Compile Include="FSharp.cs" />
     <Compile Include="Internal\ILGeneratorExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SequenceFormatter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

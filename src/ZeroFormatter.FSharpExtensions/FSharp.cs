@@ -4,6 +4,7 @@ using Microsoft.FSharp.Reflection;
 using System.Reflection;
 using ZeroFormatter.Formatters;
 using ZeroFormatter.Extensions;
+using Microsoft.FSharp.Collections;
 
 namespace ZeroFormatter
 {
@@ -24,6 +25,27 @@ namespace ZeroFormatter
                     var formatter =
                         (vt.IsValueType ? typeof(FSharpOptionStructFormatter<,>) : typeof(FSharpOptionObjectFormatter<,>))
                             .MakeGenericType(resolverType, vt);
+                    return Activator.CreateInstance(formatter);
+                }
+
+                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(FSharpList<>))
+                {
+                    var vt = t.GetGenericArguments()[0];
+                    var formatter = typeof(FSharpListFormatter<,>).MakeGenericType(resolverType, vt);
+                    return Activator.CreateInstance(formatter);
+                }
+
+                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(FSharpMap<,>))
+                {
+                    var vt = t.GetGenericArguments();
+                    var formatter = typeof(FSharpMapFormatter<,,>).MakeGenericType(resolverType, vt[0], vt[1]);
+                    return Activator.CreateInstance(formatter);
+                }
+
+                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(FSharpSet<>))
+                {
+                    var vt = t.GetGenericArguments()[0];
+                    var formatter = typeof(FSharpSetFormatter<,>).MakeGenericType(resolverType, vt);
                     return Activator.CreateInstance(formatter);
                 }
 
