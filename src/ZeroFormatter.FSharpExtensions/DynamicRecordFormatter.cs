@@ -32,40 +32,9 @@ using ZeroFormatter.Extensions.Internal;
 
 namespace ZeroFormatter.Extensions
 {
-    internal class EmittableMemberInfo
-    {
-        readonly PropertyInfo info;
-
-        public string Name
-        {
-            get
-            {
-                return info.Name;
-            }
-        }
-
-        public Type MemberType
-        {
-            get
-            {
-                return info.PropertyType;
-            }
-        }
-
-        public EmittableMemberInfo(PropertyInfo info)
-        {
-            this.info = info;
-        }
-
-        public void EmitLoadValue(ILGenerator il)
-        {
-            il.Emit(OpCodes.Callvirt, info.GetGetMethod());
-        }
-    }
-
     internal static class DynamicRecordFormatter
     {
-        public static Tuple<int, EmittableMemberInfo>[] GetMembers(Type type)
+        public static Tuple<int, PropertyInfo>[] GetMembers(Type type)
         {
 
             //if (type.GetTypeInfo().GetCustomAttributes(typeof(ZeroFormattableAttribute), true).FirstOrDefault() == null)
@@ -73,7 +42,7 @@ namespace ZeroFormatter.Extensions
             //    throw new InvalidOperationException("Type must be marked with ZeroFormattableAttribute. " + type.Name);
             //}
 
-            var dict = new Dictionary<int, EmittableMemberInfo>();
+            var dict = new Dictionary<int, PropertyInfo>();
             foreach (var item in FSharpType.GetRecordFields(type.GetTypeInfo(), FSharpOption<BindingFlags>.Some(BindingFlags.Public)))
             {
                 if (item.GetCustomAttributes(typeof(IgnoreFormatAttribute), true).Any()) continue;
@@ -89,9 +58,7 @@ namespace ZeroFormatter.Extensions
                     throw new InvalidOperationException("IndexAttribute is not allow duplicate number. " + type.Name + "." + item.Name + ", Index:" + index.Index);
                 }
 
-                var info = new EmittableMemberInfo(item);
-                // VerifyMember(info);
-                dict[index.Index] = info;
+                dict[index.Index] = item;
             }
 
             return dict.OrderBy(x => x.Key).Select(x => Tuple.Create(x.Key, x.Value)).ToArray();
@@ -118,7 +85,7 @@ namespace ZeroFormatter.Extensions
             return formatter;
         }
 
-        static int? ValidateAndCalculateLength(Type resolverType, Type t, IEnumerable<Tuple<int, EmittableMemberInfo>> source)
+        static int? ValidateAndCalculateLength(Type resolverType, Type t, IEnumerable<Tuple<int, PropertyInfo>> source)
         {
             var isNullable = false;
             var lengthSum = 0;
@@ -130,7 +97,7 @@ namespace ZeroFormatter.Extensions
                 if (item.Item1 != expected) throw new InvalidOperationException("F# record index must be started with 0 and be sequential. Type: " + t.FullName + " InvalidIndex:" + item.Item1);
                 expected++;
 
-                var formatter = typeof(Formatter<,>).MakeGenericType(resolverType, item.Item2.MemberType).GetTypeInfo().GetProperty("Default");
+                var formatter = typeof(Formatter<,>).MakeGenericType(resolverType, item.Item2.PropertyType).GetTypeInfo().GetProperty("Default");
                 var len = (formatter.GetGetMethod().Invoke(null, Type.EmptyTypes) as IFormatter).GetLength();
                 if (len != null)
                 {
@@ -141,7 +108,7 @@ namespace ZeroFormatter.Extensions
                     isNullable = true;
                 }
 
-                constructorTypes.Add(item.Item2.MemberType);
+                constructorTypes.Add(item.Item2.PropertyType);
             }
 
             if (expected != 0)
@@ -156,7 +123,7 @@ namespace ZeroFormatter.Extensions
             return isNullable ? (int?)null : lengthSum;
         }
 
-        static TypeInfo BuildFormatter(ModuleBuilder builder, Type resolverType, Type elementType, int? length, Tuple<int, EmittableMemberInfo>[] memberInfos)
+        static TypeInfo BuildFormatter(ModuleBuilder builder, Type resolverType, Type elementType, int? length, Tuple<int, PropertyInfo>[] memberInfos)
         {
             var typeBuilder = builder.DefineType(
                 DynamicAssemblyHolder.ModuleName + "." + resolverType.FullName.Replace(".", "_") + "." + elementType.FullName + "$Formatter",
@@ -164,10 +131,10 @@ namespace ZeroFormatter.Extensions
                 typeof(Formatter<,>).MakeGenericType(resolverType, elementType));
 
             // field
-            var formattersInField = new List<Tuple<int, EmittableMemberInfo, FieldBuilder>>();
+            var formattersInField = new List<Tuple<int, PropertyInfo, FieldBuilder>>();
             foreach (var item in memberInfos)
             {
-                var field = typeBuilder.DefineField("<>" + item.Item2.Name + "Formatter", typeof(Formatter<,>).MakeGenericType(resolverType, item.Item2.MemberType), FieldAttributes.Private | FieldAttributes.InitOnly);
+                var field = typeBuilder.DefineField("<>" + item.Item2.Name + "Formatter", typeof(Formatter<,>).MakeGenericType(resolverType, item.Item2.PropertyType), FieldAttributes.Private | FieldAttributes.InitOnly);
                 formattersInField.Add(Tuple.Create(item.Item1, item.Item2, field));
             }
             // .ctor
@@ -276,7 +243,7 @@ namespace ZeroFormatter.Extensions
                     il.Emit(OpCodes.Ldarg_1);
                     il.Emit(OpCodes.Ldarg_2);
                     il.Emit(OpCodes.Ldarg_3);
-                    item.Item2.EmitLoadValue(il);
+                    il.Emit(OpCodes.Callvirt, item.Item2.GetGetMethod());
                     il.Emit(OpCodes.Callvirt, item.Item3.FieldType.GetTypeInfo().GetMethod("Serialize"));
                     il.Emit(OpCodes.Add);
                     il.Emit(OpCodes.Starg_S, (byte)2);
@@ -301,7 +268,7 @@ namespace ZeroFormatter.Extensions
                     il.DeclareLocal(typeof(int)); // size
                     foreach (var item in formattersInField)
                     {
-                        il.DeclareLocal(item.Item2.MemberType); // item1, item2...
+                        il.DeclareLocal(item.Item2.PropertyType); // item1, item2...
                     }
                     il.DeclareLocal(elementType); // result
 
@@ -335,7 +302,7 @@ namespace ZeroFormatter.Extensions
                         il.Emit(OpCodes.Ldloc, i + 1);
                     }
 
-                    var constructor = elementType.GetTypeInfo().GetConstructor(memberInfos.Select(x => x.Item2.MemberType).ToArray());
+                    var constructor = elementType.GetTypeInfo().GetConstructor(memberInfos.Select(x => x.Item2.PropertyType).ToArray());
                     il.Emit(OpCodes.Newobj, constructor);
                 }
                 else
