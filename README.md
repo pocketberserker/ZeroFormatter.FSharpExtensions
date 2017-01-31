@@ -23,9 +23,9 @@ You can use `'T option` instead of `Nullable<'T>` or `null`.
 ## Supported types
 
 | F# | WireFormat | Note |
-| -- | ---------- | ---- |
+| --- | ---------- | ---- |
 | Record | Struct | versioning is not supported. |
-| DU | Union | |
+| DU | Union | versioning is not supported. |
 | 'T list | Sequence | |
 | Map<'K, 'V> | Sequence | |
 | Set<'T> | Sequence | |
