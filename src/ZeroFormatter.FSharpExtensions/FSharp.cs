@@ -24,10 +24,7 @@ namespace ZeroFormatter
                     var formatter =
                         (vt.IsValueType ? typeof(FSharpOptionStructFormatter<,>) : typeof(FSharpOptionObjectFormatter<,>))
                             .MakeGenericType(resolverType, vt);
-                    return Activator.CreateInstance(
-                        formatter,
-                        typeof(Formatter<,>).MakeGenericType(resolverType, vt).GetTypeInfo().GetProperty("Default").GetGetMethod().Invoke(null, null)
-                    );
+                    return Activator.CreateInstance(formatter);
                 }
 
                 if (FSharpType.IsRecord(t, FSharpOption<BindingFlags>.Some(BindingFlags.Public)))

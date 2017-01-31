@@ -10,9 +10,9 @@ namespace ZeroFormatter.Extensions
     {
         readonly Formatter<TTypeResolver, T> innerFormatter;
 
-        public FSharpOptionStructFormatter(Formatter<TTypeResolver, T> innerFormatter)
+        public FSharpOptionStructFormatter()
         {
-            this.innerFormatter = innerFormatter;
+            this.innerFormatter = Formatter<TTypeResolver, T>.Default;
         }
 
         public override int? GetLength()
@@ -66,9 +66,9 @@ namespace ZeroFormatter.Extensions
     {
         readonly Formatter<TTypeResolver, T> innerFormatter;
 
-        public FSharpOptionObjectFormatter(Formatter<TTypeResolver, T> innerFormatter)
+        public FSharpOptionObjectFormatter()
         {
-            this.innerFormatter = innerFormatter;
+            this.innerFormatter = Formatter<TTypeResolver, T>.Default;
         }
 
         public override int? GetLength()
