@@ -79,19 +79,19 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="ZeroFormatter">
-      <HintPath>..\..\packages\ZeroFormatter.1.6.1\lib\net45\ZeroFormatter.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="ZeroFormatter.Interfaces">
-      <HintPath>..\..\packages\ZeroFormatter.Interfaces.1.6.1\lib\net45\ZeroFormatter.Interfaces.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <ProjectReference Include="..\..\src\ZeroFormatter.FSharpExtensions\ZeroFormatter.FSharpExtensions.csproj">
       <Name>ZeroFormatter.FSharpExtensions</Name>
       <Project>{dabdc3ef-7acd-4b33-a346-c56949410edb}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="ZeroFormatter">
+      <HintPath>..\..\packages\ZeroFormatter.1.6.2\lib\net45\ZeroFormatter.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="ZeroFormatter.Interfaces">
+      <HintPath>..\..\packages\ZeroFormatter.Interfaces.1.6.2\lib\net45\ZeroFormatter.Interfaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
