@@ -19,6 +19,11 @@ namespace ZeroFormatter
 
                 var resolverType = typeof(TTypeResolver);
 
+                if (t == typeof(Unit))
+                {
+                    return new UnitFormatter<TTypeResolver>();
+                }
+
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(FSharpOption<>))
                 {
                     var vt = t.GetGenericArguments()[0];

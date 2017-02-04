@@ -29,3 +29,5 @@ You can use `'T option` instead of `Nullable<'T>` or `null`.
 | 'T list | Sequence | |
 | Map<'K, 'V> | Sequence | |
 | Set<'T> | Sequence | |
+| unit | Int32 | always -1 |
+
