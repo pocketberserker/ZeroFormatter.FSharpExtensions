@@ -31,3 +31,16 @@ module DiscriminatedUnionFormatterTest =
     let xs = ZeroFormatterSerializer.Serialize(input)
     let actual = ZeroFormatterSerializer.Deserialize<TestUnion>(xs)
     actual |> should equal input
+
+  [<Test>]
+  let ``generic type`` () =
+
+    let input: Choice<int, string> = Choice1Of2 1
+    let xs = ZeroFormatterSerializer.Serialize(input)
+    let actual = ZeroFormatterSerializer.Deserialize<Choice<int, string>>(xs)
+    actual |> should equal input
+
+    let input: Choice<int, string> = Choice2Of2 "abcd"
+    let xs = ZeroFormatterSerializer.Serialize(input)
+    let actual = ZeroFormatterSerializer.Deserialize<Choice<int, string>>(xs)
+    actual |> should equal input
