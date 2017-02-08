@@ -10,8 +10,7 @@ ZeroFormatter.FSharpExtensions is a [ZeroFormatter](https://github.com/neuecc/Ze
 
 ```fsharp
 open ZeroFormatter
-
-ZeroFormatter.FSharp.Register()
+open ZeroFormatter.FSharp
 
 // define type and initialize value ...
 

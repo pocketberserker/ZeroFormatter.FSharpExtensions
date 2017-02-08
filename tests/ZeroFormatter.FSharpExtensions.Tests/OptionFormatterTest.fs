@@ -4,13 +4,10 @@ open System
 open FsUnit
 open NUnit.Framework
 open ZeroFormatter
+open ZeroFormatter.FSharp
 
 [<TestFixture>]
 module OptionFormatterTest =
-
-  [<SetUp>]
-  let setup () =
-    ZeroFormatter.FSharp.Register<Formatters.DefaultResolver>()
 
   [<ZeroFormattable; Struct>]
   type MyStruct(x: int, y: int64, z: float32) =

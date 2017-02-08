@@ -4,13 +4,10 @@ open System
 open FsUnit
 open NUnit.Framework
 open ZeroFormatter
+open ZeroFormatter.FSharp
 
 [<TestFixture>]
 module RecordFormatterTest =
-
-  [<SetUp>]
-  let setup () =
-    ZeroFormatter.FSharp.Register<Formatters.DefaultResolver>()
 
   //[<ZeroFormattable>]
   type MyRecord = {

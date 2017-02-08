@@ -84,12 +84,10 @@ namespace ZeroFormatter.Extensions
         where TTypeResolver : ITypeResolver, new()
     {
         readonly Formatter<TTypeResolver, KeyValuePair<TKey, TValue>> kvpFormatter;
-        readonly Formatter<TTypeResolver, Tuple<TKey, TValue>> tupleFormatter;
 
         public FSharpMapFormatter()
         {
             this.kvpFormatter = Formatter<TTypeResolver, KeyValuePair<TKey, TValue>>.Default;
-            this.tupleFormatter = Formatter<TTypeResolver, Tuple<TKey, TValue>>.Default;
         }
 
         public override bool NoUseDirtyTracker
@@ -142,7 +140,8 @@ namespace ZeroFormatter.Extensions
             var result = new Tuple<TKey, TValue>[length];
             for (int i = 0; i < length; i++)
             {
-                result[i] = tupleFormatter.Deserialize(ref bytes, offset, tracker, out size);
+                var kvp = kvpFormatter.Deserialize(ref bytes, offset, tracker, out size);
+                result[i] = Tuple.Create(kvp.Key, kvp.Value);
                 offset += size;
             }
 

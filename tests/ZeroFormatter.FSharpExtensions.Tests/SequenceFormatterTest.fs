@@ -4,6 +4,7 @@ open System
 open FsUnit
 open NUnit.Framework
 open ZeroFormatter
+open ZeroFormatter.FSharp
 
 [<TestFixture>]
 module SequenceFormatterTest =
@@ -20,7 +21,7 @@ module SequenceFormatterTest =
     let actual = ZeroFormatterSerializer.Deserialize<int list>(xs)
     actual |> should equal input
 
-  [<Test; Ignore("Current ZeroFormatter resolver can not search FSharpSeqFromatter")>]
+  [<Test>]
   let ``fsharp map`` () =
     let input= Map.empty<int, bool>
     let xs = ZeroFormatterSerializer.Serialize(input)
@@ -32,7 +33,7 @@ module SequenceFormatterTest =
     let actual = ZeroFormatterSerializer.Deserialize<Map<int, bool>>(xs)
     actual |> should equal input
 
-  [<Test; Ignore("Current ZeroFormatter resolver can not search FSharpSeqFromatter")>]
+  [<Test>]
   let ``fsharp set`` () =
     let input = Seq.empty<int>
     let xs = ZeroFormatterSerializer.Serialize(input)
