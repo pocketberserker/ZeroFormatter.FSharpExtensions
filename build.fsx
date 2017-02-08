@@ -12,9 +12,14 @@ open SourceLink
 #endif
 open Fake.Testing.NUnit3
 
+let isDotnetInstalled = DotNetCli.isInstalled()
+
 let outDir = "bin"
 
 let project = "ZeroFormatter.FSharpExtensions"
+
+let netCoreProject = "src/ZeroFormatter.FSharpExtensions.NETCore/ZeroFormatter.FSharpExtensions.NETCore.csproj"
+let netCoreTestProject = "tests/ZeroFormatter.FSharpExtensions.NETCore.Tests/ZeroFormatter.FSharpExtensions.NETCore.Tests.fsproj"
 
 let solutionFile  = sprintf "%s.sln" project
 
@@ -67,6 +72,9 @@ Target "AssemblyInfo" (fun _ ->
 
     !! "src/**/*.??proj"
     |> Seq.map getProjectDetails
+    |> Seq.filter (fun (_, projectName, _, _) ->
+      not <| projectName.EndsWith("NETCore")
+    )
     |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
         match projFileName with
         | Fsproj -> CreateFSharpAssemblyInfo (("src" @@ folderName) @@ "AssemblyInfo.fs") attributes
@@ -89,6 +97,8 @@ Target "CopyBinaries" (fun _ ->
 
 Target "Clean" (fun _ ->
   CleanDirs [outDir; "temp"]
+  !! "./src/**/bin/Release"
+  |> CleanDirs
 )
 
 // --------------------------------------------------------------------------------------
@@ -100,6 +110,31 @@ Target "Build" (fun _ ->
   |> ignore
 )
 
+Target "Build.NETCore" (fun _ ->
+
+  DotNetCli.Restore (fun p ->
+    { p with
+        Project = netCoreProject
+    }
+  )
+  DotNetCli.Build (fun p ->
+    { p with
+        Project = netCoreProject
+    }
+  )
+
+  DotNetCli.Restore (fun p ->
+    { p with
+        Project = netCoreTestProject
+    }
+  )
+  DotNetCli.Build (fun p ->
+    { p with
+        Project = netCoreTestProject
+    }
+  )
+)
+
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner
 Target "RunTests" (fun _ ->
@@ -107,6 +142,15 @@ Target "RunTests" (fun _ ->
   |> NUnit3 (fun p ->
     { p with
         ToolPath = findToolInSubPath  "nunit3-console.exe" (currentDirectory @@ "packages" @@ "build" @@ "NUnit.ConsoleRunner" @@ "tools")
+    }
+  )
+)
+
+Target "RunTests.NETCore" (fun _ ->
+
+  DotNetCli.Test (fun p ->
+    { p with
+        Project = netCoreTestProject
     }
   )
 )
@@ -133,13 +177,53 @@ Target "SourceLink" (fun _ ->
 // Build a NuGet package
 
 Target "NuGet.Pack" (fun _ ->
-  Paket.Pack(fun p ->
-    { p with
-        OutputPath = "bin"
+
+  let packagingDir = outDir @@ "nuget" @@ "ZeroFormatter.FSharpExtensions"
+  [
+    "bin/ZeroFormatter.FSharpExtensions/ZeroFormatter.FSharpExtensions.dll"
+  ]
+  |> CopyFiles (packagingDir @@ "lib" @@ "net45")
+
+  let dependencies = [
+    ("FSharp.Core", "4.0.0.1")
+    ("ZeroFormatter", "1.6.2")
+  ]
+
+  NuGet (fun p ->
+    {
+      p with
+        OutputPath = outDir
+        WorkingDir = packagingDir
         Version = release.NugetVersion
         ReleaseNotes = toLines release.Notes
+        DependenciesByFramework =
+          [
+            {
+              FrameworkVersion = "net45"
+              Dependencies = dependencies
+            }
+          ]
+    }
+  ) "src/ZeroFormatter.FSharpExtensions/ZeroFormatter.FSharpExtensions.nuspec"
+)
+
+Target "NuGet.AddNetCore" (fun _ ->
+  if not isDotnetInstalled then failwith "You need to install .NET core to publish NuGet packages"
+
+  DotNetCli.Pack (fun p ->
+    { p with
+        Project = netCoreProject
     }
   )
+
+  let nupkg = sprintf "../../bin/ZeroFormatter.FSharpExtensions.%s.nupkg" release.NugetVersion
+  let netcoreNupkg = sprintf "bin/Release/ZeroFormatter.FSharpExtensions.%s.nupkg" release.NugetVersion
+
+  let mergeNupkg framework =
+    let exitCode = Shell.Exec("dotnet", sprintf """mergenupkg --source "%s" --other "%s" --framework %s""" nupkg netcoreNupkg framework, "src/ZeroFormatter.FSharpExtensions.NETCore/")
+    if exitCode <> 0 then failwithf "Command failed with exit code %i" exitCode
+
+  mergeNupkg "netstandard1.6"
 )
 
 Target "PublishNuget" (fun _ ->
@@ -167,6 +251,8 @@ Target "Release" (fun _ ->
     |> Async.RunSynchronously
 )
 
+Target "NETCore" DoNothing
+
 Target "NuGet" DoNothing
 
 Target "All" DoNothing
@@ -174,9 +260,14 @@ Target "All" DoNothing
 "Clean"
   ==> "AssemblyInfo"
   ==> "Build"
+  =?> ("NETCore", isDotnetInstalled)
   ==> "CopyBinaries"
   ==> "RunTests"
   ==> "All"
+
+"Build.NETCore"
+  ==> "RunTests.NETCore"
+  ==> "NETCore"
 
 "All"
 #if MONO
@@ -184,6 +275,7 @@ Target "All" DoNothing
   =?> ("SourceLink", Pdbstr.tryFind().IsSome )
 #endif
   ==> "NuGet.Pack"
+  ==> "NuGet.AddNetCore"
   ==> "NuGet"
 
 "NuGet"

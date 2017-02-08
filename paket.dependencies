@@ -14,5 +14,6 @@ group Build
   nuget FAKE
   nuget SourceLink.Fake
   nuget NUnit.Console
+  nuget Nuget.CommandLine
 
   github fsharp/FAKE modules/Octokit/Octokit.fsx
