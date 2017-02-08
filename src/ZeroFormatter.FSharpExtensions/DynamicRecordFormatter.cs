@@ -37,10 +37,10 @@ namespace ZeroFormatter.Extensions
         public static Tuple<int, PropertyInfo>[] GetMembers(Type type)
         {
 
-            //if (type.GetTypeInfo().GetCustomAttributes(typeof(ZeroFormattableAttribute), true).FirstOrDefault() == null)
-            //{
-            //    throw new InvalidOperationException("Type must be marked with ZeroFormattableAttribute. " + type.Name);
-            //}
+            if (type.GetTypeInfo().GetCustomAttributes(typeof(ZeroFormattableAttribute), true).FirstOrDefault() == null)
+            {
+                throw new InvalidOperationException("Type must be marked with ZeroFormattableAttribute. " + type.Name);
+            }
 
             var dict = new Dictionary<int, PropertyInfo>();
             foreach (var item in FSharpType.GetRecordFields(type.GetTypeInfo(), FSharpOption<BindingFlags>.Some(BindingFlags.Public)))

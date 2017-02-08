@@ -9,7 +9,7 @@ open ZeroFormatter.FSharp
 [<TestFixture>]
 module RecordFormatterTest =
 
-  //[<ZeroFormattable>]
+  [<ZeroFormattable>]
   type MyRecord = {
     [<Index(0)>]
     MyProperty1: int
