@@ -88,6 +88,10 @@ Target "AssemblyInfo" (fun _ ->
 // src folder to support multiple project outputs
 Target "CopyBinaries" (fun _ ->
     !! "src/**/*.??proj"
+    |> Seq.filter (fun p ->
+      isDotnetInstalled
+        || (not <| System.IO.Path.GetFileNameWithoutExtension(p).EndsWith("NETCore"))
+    )
     |>  Seq.map (fun f -> ((System.IO.Path.GetDirectoryName f) @@ "bin/Release", outDir @@ (System.IO.Path.GetFileNameWithoutExtension f)))
     |>  Seq.iter (fun (fromDir, toDir) -> CopyDir toDir fromDir (fun _ -> true))
 )
