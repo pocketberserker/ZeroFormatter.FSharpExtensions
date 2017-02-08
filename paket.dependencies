@@ -1,0 +1,18 @@
+source https://api.nuget.org/v3/index.json
+
+nuget FSharp.Core >= 4.0.0.1
+nuget ZeroFormatter >= 1.6.2
+
+group Test
+  source https://api.nuget.org/v3/index.json
+
+  nuget FsUnit
+
+group Build
+  source https://api.nuget.org/v3/index.json
+
+  nuget FAKE
+  nuget SourceLink.Fake
+  nuget NUnit.Console
+
+  github fsharp/FAKE modules/Octokit/Octokit.fsx

@@ -1,0 +1,15 @@
+type project
+owners
+    pocketberserker
+authors
+    pocketberserker
+projectUrl
+    https://github.com/pocketberserker/ZeroFormatter.FSharpExtensions
+licenseUrl
+    https://github.com/pocketberserker/ZeroFormatter.FSharpExtensions/blob/master/LICENSE
+requireLicenseAcceptance
+    false
+tags
+    F#, fsharp, ZeroFormatter, Serialization, Formatter, Serializer
+description
+  ZeroFormatter extensions for F#

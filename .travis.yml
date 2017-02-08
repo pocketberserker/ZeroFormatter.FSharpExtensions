@@ -1,0 +1,12 @@
+language: csharp
+
+sudo: false
+
+mono:
+  - latest
+solution: ZeroFormatter.FSharpExtensions.sln
+
+before_script:
+  - chmod +x ./build.sh
+script:
+  - ./build.sh

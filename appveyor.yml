@@ -11,12 +11,11 @@ skip_commits:
 
 clone_depth: 50
 
-configuration:
-  - Release
+test: off
 
-before_build:
-  - nuget restore
+build_script:
+  - cmd: build.cmd
 
-test:
-  assemblies:
-    - '**\*.Tests.dll'
+cache:
+  - packages -> paket.lock
+  - paket-files -> paket.lock

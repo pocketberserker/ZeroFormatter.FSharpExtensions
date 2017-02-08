@@ -3,6 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{E6F626C5-282D-482E-A627-403480A04625}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+	EndProjectSection
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZeroFormatter.FSharpExtensions", "src\ZeroFormatter.FSharpExtensions\ZeroFormatter.FSharpExtensions.csproj", "{DABDC3EF-7ACD-4B33-A346-C56949410EDB}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ZeroFormatter.FSharpExtensions.Tests", "tests\ZeroFormatter.FSharpExtensions.Tests\ZeroFormatter.FSharpExtensions.Tests.fsproj", "{B2B72A28-3CB8-4CA8-A5F4-FEDBF27F1200}"
