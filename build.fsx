@@ -12,7 +12,9 @@ open SourceLink
 #endif
 open Fake.Testing.NUnit3
 
-let isDotnetInstalled = DotNetCli.isInstalled()
+let isAppVeyor = buildServer = AppVeyor
+
+let isDotnetInstalled = DotNetCli.isInstalled() && not isAppVeyor
 
 let outDir = "bin"
 
