@@ -63,3 +63,18 @@ module OptionFormatterTest =
     let xs = ZeroFormatterSerializer.Serialize<MyObject option>(None)
     let actual = ZeroFormatterSerializer.Deserialize<MyObject option>(xs)
     actual |> should equal None
+
+  [<Test>]
+  let ``tuple some`` () =
+    let input = (1, 2)
+    let xs = ZeroFormatterSerializer.Serialize(Some input)
+    match ZeroFormatterSerializer.Deserialize<(int * int) option>(xs) with
+    | Some actual ->
+      actual |> should equal input
+    | None -> Assert.Fail("expected Some, but was None")
+
+  [<Test>]
+  let ``tuple none`` () =
+    let xs = ZeroFormatterSerializer.Serialize<(int * int) option>(None)
+    ZeroFormatterSerializer.Deserialize<(int * int) option>(xs)
+    |> should equal None
