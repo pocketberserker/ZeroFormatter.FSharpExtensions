@@ -43,3 +43,29 @@ module RecordFormatterTest =
     let xs = ZeroFormatterSerializer.Serialize(input)
     ZeroFormatterSerializer.Deserialize<MutableRecord>(xs)
     |> should equal input
+
+  [<ZeroFormattable>]
+  type MyRecord2 = {
+    [<Index(0)>]
+    Age: int
+    [<Index(1)>]
+    FirstName: string
+    [<Index(2)>]
+    LastName: string
+    [<Index(3)>]
+    List: int list
+  }
+  with
+    member this.FullName = this.FirstName + this.LastName
+
+  [<Test>]
+  let ``record with ignore property`` () =
+    let input = {
+      Age = 99
+      FirstName = "hoge"
+      LastName = "huga"
+      List = [ 1; 10; 100 ]
+    }
+    let xs = ZeroFormatterSerializer.Serialize(input)
+    ZeroFormatterSerializer.Deserialize<MyRecord2>(xs)
+    |> should equal input
