@@ -3,15 +3,15 @@ using System.Reflection;
 
 [assembly: AssemblyTitleAttribute("ZeroFormatter.FSharpExtensions")]
 [assembly: AssemblyProductAttribute("ZeroFormatter.FSharpExtensions")]
-[assembly: AssemblyVersionAttribute("0.1.0")]
-[assembly: AssemblyFileVersionAttribute("0.1.0")]
-[assembly: AssemblyInformationalVersionAttribute("0.1.0")]
+[assembly: AssemblyVersionAttribute("0.2.0")]
+[assembly: AssemblyFileVersionAttribute("0.2.0")]
+[assembly: AssemblyInformationalVersionAttribute("0.2.0")]
 namespace System {
     internal static class AssemblyVersionInformation {
         internal const System.String AssemblyTitle = "ZeroFormatter.FSharpExtensions";
         internal const System.String AssemblyProduct = "ZeroFormatter.FSharpExtensions";
-        internal const System.String AssemblyVersion = "0.1.0";
-        internal const System.String AssemblyFileVersion = "0.1.0";
-        internal const System.String AssemblyInformationalVersion = "0.1.0";
+        internal const System.String AssemblyVersion = "0.2.0";
+        internal const System.String AssemblyFileVersion = "0.2.0";
+        internal const System.String AssemblyInformationalVersion = "0.2.0";
     }
 }

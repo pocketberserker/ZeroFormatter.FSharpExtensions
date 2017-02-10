@@ -1,6 +1,6 @@
 ﻿<Project ToolsVersion="15.0" Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <AssemblyName>ZeroFormatter.FSharpExtensions</AssemblyName>
     <TargetFramework>netstandard1.6</TargetFramework>
   </PropertyGroup>
