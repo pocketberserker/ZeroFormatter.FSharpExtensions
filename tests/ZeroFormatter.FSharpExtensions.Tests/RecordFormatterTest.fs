@@ -26,6 +26,19 @@ module RecordFormatterTest =
     ZeroFormatterSerializer.Deserialize<MyRecord>(xs)
     |> should equal input
 
+  [<Test>]
+  let ``record some`` () =
+    let input = Some { MyProperty1 = 100; MyProperty2 = 99999999L; MyProperty3 = -123.43f }
+    let xs = ZeroFormatterSerializer.Serialize(input)
+    ZeroFormatterSerializer.Deserialize<MyRecord option>(xs)
+    |> should equal input
+
+  [<Test>]
+  let ``record none`` () =
+    let xs = ZeroFormatterSerializer.Serialize<MyRecord option>(None)
+    ZeroFormatterSerializer.Deserialize<MyRecord option>(xs)
+    |> should equal None
+
   [<ZeroFormattable>]
   type MutableRecord = {
     [<Index(0)>]

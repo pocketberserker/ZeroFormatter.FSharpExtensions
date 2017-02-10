@@ -2,7 +2,6 @@
 using Microsoft.FSharp.Core;
 using Microsoft.FSharp.Reflection;
 using System;
-using System.Reflection;
 using ZeroFormatter.Extensions;
 
 namespace ZeroFormatter.Formatters
@@ -42,10 +41,18 @@ namespace ZeroFormatter.Formatters
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpOption<>))
             {
                 var vt = type.GetGenericArguments()[0];
-                var formatter =
-                    (vt.IsValueType ? typeof(FSharpOptionStructFormatter<,>) : typeof(FSharpOptionObjectFormatter<,>))
-                        .MakeGenericType(resolverType, vt);
-                return Activator.CreateInstance(formatter);
+                if (FSharpType.IsRecord(vt, null))
+                {
+                    var formatter = typeof(FSharpOptionRecordFormatter<,>).MakeGenericType(resolverType, vt);
+                    return Activator.CreateInstance(formatter);
+                }
+                else
+                {
+                    var formatter =
+                        (vt.IsValueType ? typeof(FSharpOptionStructFormatter<,>) : typeof(FSharpOptionObjectFormatter<,>))
+                            .MakeGenericType(resolverType, vt);
+                    return Activator.CreateInstance(formatter);
+                }
             }
 
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpList<>))
@@ -69,13 +76,13 @@ namespace ZeroFormatter.Formatters
                 return Activator.CreateInstance(formatter);
             }
 
-            if (FSharpType.IsRecord(type, FSharpOption<BindingFlags>.Some(BindingFlags.Public)))
+            if (FSharpType.IsRecord(type, null))
             {
                 return typeof(DynamicRecordFormatter).GetMethod("Create")
                     .MakeGenericMethod(new[] { resolverType, type }).Invoke(null, null);
             }
 
-            if (FSharpType.IsUnion(type, FSharpOption<BindingFlags>.Some(BindingFlags.Public)))
+            if (FSharpType.IsUnion(type, null))
             {
                 return typeof(DynamicFSharpUnionFormatter).GetMethod("Create")
                     .MakeGenericMethod(new[] { resolverType, type }).Invoke(null, null);

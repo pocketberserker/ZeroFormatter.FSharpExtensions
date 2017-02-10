@@ -4,13 +4,12 @@ using ZeroFormatter.Internal;
 
 namespace ZeroFormatter.Extensions
 {
-    internal class FSharpOptionStructFormatter<TTypeResolver, T> : Formatter<TTypeResolver, FSharpOption<T>>
-        where T : struct
+    internal abstract class FSharpOptionStructBaseFormatter<TTypeResolver, T> : Formatter<TTypeResolver, FSharpOption<T>>
         where TTypeResolver : ITypeResolver, new()
     {
         readonly Formatter<TTypeResolver, T> innerFormatter;
 
-        public FSharpOptionStructFormatter()
+        public FSharpOptionStructBaseFormatter()
         {
             this.innerFormatter = Formatter<TTypeResolver, T>.Default;
         }
@@ -59,6 +58,15 @@ namespace ZeroFormatter.Extensions
             return FSharpOption<T>.Some(v);
         }
     }
+
+    internal class FSharpOptionStructFormatter<TTypeResolver, T> : FSharpOptionStructBaseFormatter<TTypeResolver, T>
+        where T : struct
+        where TTypeResolver : ITypeResolver, new()
+    { }
+
+    internal class FSharpOptionRecordFormatter<TTypeResolver, T> : FSharpOptionStructBaseFormatter<TTypeResolver, T>
+        where TTypeResolver : ITypeResolver, new()
+    { }
 
     internal class FSharpOptionObjectFormatter<TTypeResolver, T> : Formatter<TTypeResolver, FSharpOption<T>>
         where T : class
