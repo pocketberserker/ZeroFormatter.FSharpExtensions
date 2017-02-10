@@ -12,9 +12,42 @@ ZeroFormatter.FSharpExtensions is a [ZeroFormatter](https://github.com/neuecc/Ze
 open ZeroFormatter
 open ZeroFormatter.FSharp
 
-// define type and initialize value ...
+[<ZeroFormattable>]
+type MyRecord = {
+  [<Index(0)>]
+  Age: int
+  [<Index(1)>]
+  FirstName: string
+  [<Index(2)>]
+  LastName: string
+  [<Index(3)>]
+  List: int list
+}
+with
+  member this.FullName = this.FirstName + this.LastName
 
-ZeroFormatterSerializer.Serialize(value)
+let mr = {
+  Age = 99
+  FirstName = "hoge"
+  LastName = "huga"
+  List = [ 1; 10; 100 ]
+}
+
+let bytes = ZeroFormatterSerializer.Serialize(mr);
+let mr2 = ZeroFormatterSerializer.Deserialize<MyRecord>(bytes)
+printfn "%s" mr2.FullName
+
+type Character =
+  | Human of name : string * birth : DateTime * age : int * faith : int
+  | Monster of race : string * power : int * magic : int
+
+let daemon = Monster("Demon", 9999, 1000)
+let data = ZeroFormatterSerializer.Serialize(daemon)
+match ZeroFormatterSerializer.Deserialize(data) with
+| Human(name, birth, age, faith) ->
+  ...
+| Monster(race, power, magic) ->
+  ...
 ```
 
 ## Null safety
