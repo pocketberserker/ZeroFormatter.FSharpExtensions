@@ -21,8 +21,11 @@
 using System;
 using System.Reflection;
 using System.Reflection.Emit;
-using Microsoft.FSharp.Core;
+#if NETSTANDARD
+using ZeroFormatter.Extensions.Internal.FSharp;
+#else
 using Microsoft.FSharp.Reflection;
+#endif
 using System.Collections.Generic;
 using System.Linq;
 using ZeroFormatter.Formatters;
@@ -43,7 +46,7 @@ namespace ZeroFormatter.Extensions
             }
 
             var dict = new Dictionary<int, PropertyInfo>();
-            foreach (var item in FSharpType.GetRecordFields(type.GetTypeInfo(), FSharpOption<BindingFlags>.Some(BindingFlags.Public)))
+            foreach (var item in FSharpType.GetRecordFields(type, null))
             {
                 if (item.GetCustomAttributes(typeof(IgnoreFormatAttribute), true).Any()) continue;
 
@@ -69,8 +72,7 @@ namespace ZeroFormatter.Extensions
         {
             var resolverType = typeof(TTypeResolver);
             var t = typeof(T);
-            var ti = t.GetTypeInfo();
-            if (!FSharpType.IsRecord(ti, FSharpOption<BindingFlags>.Some(BindingFlags.Public)))
+            if (!FSharpType.IsRecord(t, null))
             {
                 throw new InvalidOperationException("Type must be F# record. " + t.Name);
             }

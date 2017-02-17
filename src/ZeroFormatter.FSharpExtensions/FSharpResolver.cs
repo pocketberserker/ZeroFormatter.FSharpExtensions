@@ -1,7 +1,12 @@
 ﻿using Microsoft.FSharp.Collections;
 using Microsoft.FSharp.Core;
+#if NETSTANDARD
+using ZeroFormatter.Extensions.Internal.FSharp;
+#else
 using Microsoft.FSharp.Reflection;
+#endif
 using System;
+using System.Reflection;
 using ZeroFormatter.Extensions;
 
 namespace ZeroFormatter.Formatters
@@ -38,9 +43,11 @@ namespace ZeroFormatter.Formatters
                 return new UnitFormatter<FSharpResolver<TTypeResolver>>();
             }
 
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpOption<>))
+            var isGenericType = type.GetTypeInfo().IsGenericType;
+
+            if (isGenericType && type.GetGenericTypeDefinition() == typeof(FSharpOption<>))
             {
-                var vt = type.GetGenericArguments()[0];
+                var vt = type.GetTypeInfo().GetGenericArguments()[0];
                 if (FSharpType.IsRecord(vt, null))
                 {
                     var formatter = typeof(FSharpOptionRecordFormatter<,>).MakeGenericType(resolverType, vt);
@@ -49,42 +56,42 @@ namespace ZeroFormatter.Formatters
                 else
                 {
                     var formatter =
-                        (vt.IsValueType ? typeof(FSharpOptionStructFormatter<,>) : typeof(FSharpOptionObjectFormatter<,>))
+                        (vt.GetTypeInfo().IsValueType ? typeof(FSharpOptionStructFormatter<,>) : typeof(FSharpOptionObjectFormatter<,>))
                             .MakeGenericType(resolverType, vt);
                     return Activator.CreateInstance(formatter);
                 }
             }
 
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpList<>))
+            if (isGenericType && type.GetGenericTypeDefinition() == typeof(FSharpList<>))
             {
-                var vt = type.GetGenericArguments()[0];
+                var vt = type.GetTypeInfo().GetGenericArguments()[0];
                 var formatter = typeof(FSharpListFormatter<,>).MakeGenericType(resolverType, vt);
                 return Activator.CreateInstance(formatter);
             }
 
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpMap<,>))
+            if (isGenericType && type.GetGenericTypeDefinition() == typeof(FSharpMap<,>))
             {
-                var vt = type.GetGenericArguments();
+                var vt = type.GetTypeInfo().GetGenericArguments();
                 var formatter = typeof(FSharpMapFormatter<,,>).MakeGenericType(resolverType, vt[0], vt[1]);
                 return Activator.CreateInstance(formatter);
             }
 
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpSet<>))
+            if (isGenericType && type.GetGenericTypeDefinition() == typeof(FSharpSet<>))
             {
-                var vt = type.GetGenericArguments()[0];
+                var vt = type.GetTypeInfo().GetGenericArguments()[0];
                 var formatter = typeof(FSharpSetFormatter<,>).MakeGenericType(resolverType, vt);
                 return Activator.CreateInstance(formatter);
             }
 
             if (FSharpType.IsRecord(type, null))
             {
-                return typeof(DynamicRecordFormatter).GetMethod("Create")
+                return typeof(DynamicRecordFormatter).GetTypeInfo().GetMethod("Create")
                     .MakeGenericMethod(new[] { resolverType, type }).Invoke(null, null);
             }
 
             if (FSharpType.IsUnion(type, null))
             {
-                return typeof(DynamicFSharpUnionFormatter).GetMethod("Create")
+                return typeof(DynamicFSharpUnionFormatter).GetTypeInfo().GetMethod("Create")
                     .MakeGenericMethod(new[] { resolverType, type }).Invoke(null, null);
             }
 

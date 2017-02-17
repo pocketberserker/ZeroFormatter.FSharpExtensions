@@ -1,5 +1,9 @@
 ﻿using Microsoft.FSharp.Core;
+#if NETSTANDARD
+using ZeroFormatter.Extensions.Internal.FSharp;
+#else
 using Microsoft.FSharp.Reflection;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,12 +23,12 @@ namespace ZeroFormatter.Extensions
             var t = typeof(T);
             var ti = t.GetTypeInfo();
 
-            if (!FSharpType.IsUnion(t, FSharpOption<BindingFlags>.Some(BindingFlags.Public)))
+            if (!FSharpType.IsUnion(t, null))
             {
                 throw new InvalidOperationException("Type must be F# Discriminated Union. " + ti.FullName);
             }
 
-            var unionCases = FSharpType.GetUnionCases(t, FSharpOption<BindingFlags>.Some(BindingFlags.Public));
+            var unionCases = FSharpType.GetUnionCases(t, null);
 
             var generateTypeInfo = BuildFormatter(typeof(TTypeResolver), t, unionCases);
             var formatter = Activator.CreateInstance(generateTypeInfo.AsType());
@@ -32,7 +36,7 @@ namespace ZeroFormatter.Extensions
             return formatter;
         }
 
-        static TypeInfo BuildFormatter(Type resolverType, Type buildType, UnionCaseInfo[] unionCases)
+        static TypeInfo BuildFormatter(Type resolverType, Type buildType, Microsoft.FSharp.Reflection.UnionCaseInfo[] unionCases)
         {
             var moduleBuilder = Segments.DynamicAssemblyHolder.Module;
 
@@ -50,7 +54,7 @@ namespace ZeroFormatter.Extensions
                     var field = typeBuilder.DefineField("<>" + item.Name + info.Name + "Formatter", typeof(Formatter<,>).MakeGenericType(resolverType, info.PropertyType), FieldAttributes.Private | FieldAttributes.InitOnly);
                     fs.Add(Tuple.Create(info, field));
                 }
-                var unionInfo = typeBuilder.DefineField("<>" + item.Name + "UnionCaseInfo", typeof(UnionCaseInfo), FieldAttributes.Private | FieldAttributes.InitOnly);
+                var unionInfo = typeBuilder.DefineField("<>" + item.Name + "UnionCaseInfo", typeof(Microsoft.FSharp.Reflection.UnionCaseInfo), FieldAttributes.Private | FieldAttributes.InitOnly);
                 formattersInField.Add(Tuple.Create(item.Tag, unionInfo, fs));
             }
 
@@ -63,12 +67,19 @@ namespace ZeroFormatter.Extensions
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Call, typeof(Formatter<,>).MakeGenericType(resolverType, buildType).GetTypeInfo().GetConstructor(Type.EmptyTypes));
 
-                il.DeclareLocal(typeof(UnionCaseInfo []));
+                il.DeclareLocal(typeof(Microsoft.FSharp.Reflection.UnionCaseInfo []));
 
                 il.Emit(OpCodes.Ldtoken, buildType);
-                il.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle"), null);
-                il.Emit(OpCodes.Ldnull); // equal FSharpOpion<BindingFlags>.None
-                il.Emit(OpCodes.Call, typeof(FSharpType).GetMethod("GetUnionCases", new Type[] { typeof(Type), typeof(FSharpOption<BindingFlags>) }));
+                il.EmitCall(OpCodes.Call, typeof(Type).GetTypeInfo().GetMethod("GetTypeFromHandle"), null);
+                il.Emit(OpCodes.Ldnull); // equal FSharpOpion<T>.None
+                il.Emit(
+                    OpCodes.Call,
+#if NETSTANDARD
+                    FSharpType.getUnionCases
+#else
+                    typeof(Microsoft.FSharp.Reflection.FSharpType).GetTypeInfo().GetMethod("GetUnionCases", new Type[] { typeof(Type), typeof(FSharpOption<BindingFlags>)})
+#endif
+                );
                 il.Emit(OpCodes.Stloc_0);
 
                 for (var i = 0; i < formattersInField.Count; i++)
@@ -314,17 +325,21 @@ namespace ZeroFormatter.Extensions
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Ldfld, unionCase.Item2);
                     il.Emit(OpCodes.Ldloc_3);
-                    il.Emit(OpCodes.Ldnull); // equal FSharpOpion<BindingFlags>.None
+                    il.Emit(OpCodes.Ldnull); // equal FSharpOpion<T>.None
                     il.Emit(
                         OpCodes.Call,
-                        typeof(FSharpValue).GetMethod(
+#if NETSTANDARD
+                        typeof(Microsoft.FSharp.Reflection.FSharpReflectionExtensions).GetTypeInfo().GetMethod("FSharpValue.MakeUnion.Static")
+#else
+                        typeof(Microsoft.FSharp.Reflection.FSharpValue).GetTypeInfo().GetMethod(
                             "MakeUnion",
                             new Type[] {
-                                typeof(UnionCaseInfo),
+                                typeof(Microsoft.FSharp.Reflection.UnionCaseInfo),
                                 typeof(object []),
                                 typeof(FSharpOption<BindingFlags>)
                             }
                         )
+#endif
                     );
                     il.Emit(OpCodes.Call, typeof(Operators).GetTypeInfo().GetMethod("Unbox").MakeGenericMethod(buildType));
 

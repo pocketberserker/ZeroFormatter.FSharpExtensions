@@ -12,21 +12,18 @@ open SourceLink
 #endif
 open Fake.Testing.NUnit3
 
-let isAppVeyor = buildServer = AppVeyor
-
-let isDotnetInstalled = DotNetCli.isInstalled() && not isAppVeyor
-
-let outDir = "bin"
+let outDir = currentDirectory @@ "bin"
 
 let project = "ZeroFormatter.FSharpExtensions"
 
-let netCoreProject = "src/ZeroFormatter.FSharpExtensions.NETCore/ZeroFormatter.FSharpExtensions.NETCore.csproj"
+let netCoreProject = "src/ZeroFormatter.FSharpExtensions/ZeroFormatter.FSharpExtensions.csproj"
+let net45TestProject = "tests/ZeroFormatter.FSharpExtensions.Tests/ZeroFormatter.FSharpExtensions.Tests.fsproj"
 let netCoreTestProject = "tests/ZeroFormatter.FSharpExtensions.NETCore.Tests/ZeroFormatter.FSharpExtensions.NETCore.Tests.fsproj"
 
 let solutionFile  = sprintf "%s.sln" project
 
 // Pattern specifying assemblies to be tested using NUnit
-let testAssemblies = "tests/**/bin/Release/*Tests*.dll"
+let testAssemblies = "tests/ZeroFormatter.FSharpExtensions.Tests/bin/Release/*/*Tests*.dll"
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
@@ -46,58 +43,6 @@ let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/pocketberserke
 // Read additional information from the release notes document
 let release = LoadReleaseNotes "RELEASE_NOTES.md"
 
-// Helper active pattern for project types
-let (|Fsproj|Csproj|Vbproj|) (projFileName:string) =
-    match projFileName with
-    | f when f.EndsWith("fsproj") -> Fsproj
-    | f when f.EndsWith("csproj") -> Csproj
-    | f when f.EndsWith("vbproj") -> Vbproj
-    | _                           -> failwith (sprintf "Project file %s not supported. Unknown project type." projFileName)
-
-// Generate assembly info files with the right version & up-to-date information
-Target "AssemblyInfo" (fun _ ->
-    let replace (oldValue:string) newValue (str:string) = str.Replace(oldValue, newValue)
-    let getAssemblyInfoAttributes projectName =
-        [ Attribute.Title projectName
-          Attribute.Product project
-          Attribute.Version release.AssemblyVersion
-          Attribute.FileVersion release.AssemblyVersion
-          Attribute.InformationalVersion release.NugetVersion ]
-
-    let getProjectDetails projectPath =
-        let projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath)
-        ( projectPath,
-          projectName,
-          System.IO.Path.GetDirectoryName(projectPath),
-          (getAssemblyInfoAttributes projectName)
-        )
-
-    !! "src/**/*.??proj"
-    |> Seq.map getProjectDetails
-    |> Seq.filter (fun (_, projectName, _, _) ->
-      not <| projectName.EndsWith("NETCore")
-    )
-    |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
-        match projFileName with
-        | Fsproj -> CreateFSharpAssemblyInfo (("src" @@ folderName) @@ "AssemblyInfo.fs") attributes
-        | Csproj -> CreateCSharpAssemblyInfo (("src" @@ folderName @@ "Properties") @@ "AssemblyInfo.cs") attributes
-        | Vbproj -> CreateVisualBasicAssemblyInfo ((folderName @@ "My Project") @@ "AssemblyInfo.vb") attributes
-        )
-)
-
-// Copies binaries from default VS location to exepcted bin folder
-// But keeps a subdirectory structure for each project in the
-// src folder to support multiple project outputs
-Target "CopyBinaries" (fun _ ->
-    !! "src/**/*.??proj"
-    |> Seq.filter (fun p ->
-      isDotnetInstalled
-        || (not <| System.IO.Path.GetFileNameWithoutExtension(p).EndsWith("NETCore"))
-    )
-    |>  Seq.map (fun f -> ((System.IO.Path.GetDirectoryName f) @@ "bin/Release", outDir @@ (System.IO.Path.GetFileNameWithoutExtension f)))
-    |>  Seq.iter (fun (fromDir, toDir) -> CopyDir toDir fromDir (fun _ -> true))
-)
-
 // --------------------------------------------------------------------------------------
 // Clean build results
 
@@ -111,12 +56,6 @@ Target "Clean" (fun _ ->
 // Build library & test project
 
 Target "Build" (fun _ ->
-  !! solutionFile
-  |> MSBuildRelease "" "Rebuild"
-  |> ignore
-)
-
-Target "Build.NETCore" (fun _ ->
 
   DotNetCli.Restore (fun p ->
     { p with
@@ -126,6 +65,17 @@ Target "Build.NETCore" (fun _ ->
   DotNetCli.Build (fun p ->
     { p with
         Project = netCoreProject
+    }
+  )
+
+  DotNetCli.Restore (fun p ->
+    { p with
+        Project = net45TestProject
+    }
+  )
+  DotNetCli.Build (fun p ->
+    { p with
+        Project = net45TestProject
     }
   )
 
@@ -150,9 +100,6 @@ Target "RunTests" (fun _ ->
         ToolPath = findToolInSubPath  "nunit3-console.exe" (currentDirectory @@ "packages" @@ "build" @@ "NUnit.ConsoleRunner" @@ "tools")
     }
   )
-)
-
-Target "RunTests.NETCore" (fun _ ->
 
   DotNetCli.Test (fun p ->
     { p with
@@ -182,54 +129,14 @@ Target "SourceLink" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Build a NuGet package
 
-Target "NuGet.Pack" (fun _ ->
-
-  let packagingDir = outDir @@ "nuget" @@ "ZeroFormatter.FSharpExtensions"
-  [
-    "bin/ZeroFormatter.FSharpExtensions/ZeroFormatter.FSharpExtensions.dll"
-  ]
-  |> CopyFiles (packagingDir @@ "lib" @@ "net45")
-
-  let dependencies = [
-    ("FSharp.Core", "4.0.0.1")
-    ("ZeroFormatter", "1.6.2")
-  ]
-
-  NuGet (fun p ->
-    {
-      p with
-        OutputPath = outDir
-        WorkingDir = packagingDir
-        Version = release.NugetVersion
-        ReleaseNotes = toLines release.Notes
-        DependenciesByFramework =
-          [
-            {
-              FrameworkVersion = "net45"
-              Dependencies = dependencies
-            }
-          ]
-    }
-  ) "src/ZeroFormatter.FSharpExtensions/ZeroFormatter.FSharpExtensions.nuspec"
-)
-
-Target "NuGet.AddNetCore" (fun _ ->
-  if not isDotnetInstalled then failwith "You need to install .NET core to publish NuGet packages"
+Target "NuGet" (fun _ ->
 
   DotNetCli.Pack (fun p ->
     { p with
         Project = netCoreProject
+        OutputPath = outDir
     }
   )
-
-  let nupkg = sprintf "../../bin/ZeroFormatter.FSharpExtensions.%s.nupkg" release.NugetVersion
-  let netcoreNupkg = sprintf "bin/Release/ZeroFormatter.FSharpExtensions.%s.nupkg" release.NugetVersion
-
-  let mergeNupkg framework =
-    let exitCode = Shell.Exec("dotnet", sprintf """mergenupkg --source "%s" --other "%s" --framework %s""" nupkg netcoreNupkg framework, "src/ZeroFormatter.FSharpExtensions.NETCore/")
-    if exitCode <> 0 then failwithf "Command failed with exit code %i" exitCode
-
-  mergeNupkg "netstandard1.6"
 )
 
 Target "PublishNuget" (fun _ ->
@@ -257,31 +164,18 @@ Target "Release" (fun _ ->
     |> Async.RunSynchronously
 )
 
-Target "NETCore" DoNothing
-
-Target "NuGet" DoNothing
-
 Target "All" DoNothing
 
 "Clean"
-  ==> "AssemblyInfo"
   ==> "Build"
-  =?> ("NETCore", isDotnetInstalled)
-  ==> "CopyBinaries"
   ==> "RunTests"
   ==> "All"
-
-"Build.NETCore"
-  ==> "RunTests.NETCore"
-  ==> "NETCore"
 
 "All"
 #if MONO
 #else
   =?> ("SourceLink", Pdbstr.tryFind().IsSome )
 #endif
-  ==> "NuGet.Pack"
-  ==> "NuGet.AddNetCore"
   ==> "NuGet"
 
 "NuGet"
