@@ -23,3 +23,22 @@ let ``value tuple none`` () =
   let xs = ZeroFormatterSerializer.Serialize<(struct (int * int64 * float)) option>(None)
   let actual = ZeroFormatterSerializer.Deserialize<(struct (int * int64 * float)) option>(xs)
   Assert.Equal(None, actual)
+
+[<ZeroFormattable; Struct>]
+type MyRecord = {
+  [<Index(0)>]
+  MyProperty1: int
+  [<Index(1)>]
+  MyProperty2: int64
+  [<Index(2)>]
+  MyProperty3: float32
+}
+
+[<Fact>]
+let ``struct record`` () =
+  let input = { MyProperty1 = 100; MyProperty2 = 99999999L; MyProperty3 = -123.43f }
+  let xs = ZeroFormatterSerializer.Serialize(input)
+  let actual = ZeroFormatterSerializer.Deserialize<MyRecord>(xs)
+  Assert.Equal(input.MyProperty1, actual.MyProperty1)
+  Assert.Equal(input.MyProperty2, actual.MyProperty2)
+  Assert.Equal(input.MyProperty3, actual.MyProperty3)

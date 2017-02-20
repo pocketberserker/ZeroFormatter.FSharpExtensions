@@ -244,7 +244,14 @@ namespace ZeroFormatter.Extensions
                     il.Emit(OpCodes.Ldfld, item.Item3);
                     il.Emit(OpCodes.Ldarg_1);
                     il.Emit(OpCodes.Ldarg_2);
-                    il.Emit(OpCodes.Ldarg_3);
+                    if(elementType.GetTypeInfo().IsValueType)
+                    {
+                        il.Emit(OpCodes.Ldarga_S, (byte)3);
+                    }
+                    else
+                    {
+                        il.Emit(OpCodes.Ldarg_3);
+                    }
                     il.Emit(OpCodes.Callvirt, item.Item2.GetGetMethod());
                     il.Emit(OpCodes.Callvirt, item.Item3.FieldType.GetTypeInfo().GetMethod("Serialize"));
                     il.Emit(OpCodes.Add);
@@ -257,7 +264,7 @@ namespace ZeroFormatter.Extensions
                 il.Emit(OpCodes.Sub);
                 il.Emit(OpCodes.Ret);
             }
-            //// public override T Deserialize(ref byte[] bytes, int offset, DirtyTracker tracker, out int byteSize)
+            // public override T Deserialize(ref byte[] bytes, int offset, DirtyTracker tracker, out int byteSize)
             {
                 var method = typeBuilder.DefineMethod("Deserialize", MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.Virtual,
                     elementType,
