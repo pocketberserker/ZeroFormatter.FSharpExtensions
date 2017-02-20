@@ -42,12 +42,12 @@ namespace ZeroFormatter.Formatters
             {
                 return new UnitFormatter<FSharpResolver<TTypeResolver>>();
             }
+            
+            var ti = type.GetTypeInfo();
 
-            var isGenericType = type.GetTypeInfo().IsGenericType;
-
-            if (isGenericType && type.GetGenericTypeDefinition() == typeof(FSharpOption<>))
+            if (ti.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpOption<>))
             {
-                var vt = type.GetTypeInfo().GetGenericArguments()[0];
+                var vt = ti.GetGenericArguments()[0];
                 if (FSharpType.IsRecord(vt, null))
                 {
                     var formatter = typeof(FSharpOptionRecordFormatter<,>).MakeGenericType(resolverType, vt);
@@ -62,23 +62,23 @@ namespace ZeroFormatter.Formatters
                 }
             }
 
-            if (isGenericType && type.GetGenericTypeDefinition() == typeof(FSharpList<>))
+            if (ti.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpList<>))
             {
-                var vt = type.GetTypeInfo().GetGenericArguments()[0];
+                var vt = ti.GetGenericArguments()[0];
                 var formatter = typeof(FSharpListFormatter<,>).MakeGenericType(resolverType, vt);
                 return Activator.CreateInstance(formatter);
             }
 
-            if (isGenericType && type.GetGenericTypeDefinition() == typeof(FSharpMap<,>))
+            if (ti.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpMap<,>))
             {
-                var vt = type.GetTypeInfo().GetGenericArguments();
+                var vt = ti.GetGenericArguments();
                 var formatter = typeof(FSharpMapFormatter<,,>).MakeGenericType(resolverType, vt[0], vt[1]);
                 return Activator.CreateInstance(formatter);
             }
 
-            if (isGenericType && type.GetGenericTypeDefinition() == typeof(FSharpSet<>))
+            if (ti.IsGenericType && type.GetGenericTypeDefinition() == typeof(FSharpSet<>))
             {
-                var vt = type.GetTypeInfo().GetGenericArguments()[0];
+                var vt = ti.GetGenericArguments()[0];
                 var formatter = typeof(FSharpSetFormatter<,>).MakeGenericType(resolverType, vt);
                 return Activator.CreateInstance(formatter);
             }
@@ -93,6 +93,43 @@ namespace ZeroFormatter.Formatters
             {
                 return typeof(DynamicFSharpUnionFormatter).GetTypeInfo().GetMethod("Create")
                     .MakeGenericMethod(new[] { resolverType, type }).Invoke(null, null);
+            }
+
+            if (Microsoft.FSharp.Reflection.FSharpType.IsTuple(type) && ti.IsValueType)
+            {
+                Type tupleFormatterType = null;
+                switch (ti.GetGenericArguments().Length)
+                {
+                    case 1:
+                        tupleFormatterType = typeof(ValueTupleFormatter<,>);
+                        break;
+                    case 2:
+                        tupleFormatterType = typeof(ValueTupleFormatter<,,>);
+                        break;
+                    case 3:
+                        tupleFormatterType = typeof(ValueTupleFormatter<,,,>);
+                        break;
+                    case 4:
+                        tupleFormatterType = typeof(ValueTupleFormatter<,,,,>);
+                        break;
+                    case 5:
+                        tupleFormatterType = typeof(ValueTupleFormatter<,,,,,>);
+                        break;
+                    case 6:
+                        tupleFormatterType = typeof(ValueTupleFormatter<,,,,,,>);
+                        break;
+                    case 7:
+                        tupleFormatterType = typeof(ValueTupleFormatter<,,,,,,,>);
+                        break;
+                    case 8:
+                        tupleFormatterType = typeof(ValueTupleFormatter<,,,,,,,,>);
+                        break;
+                    default:
+                        break;
+                }
+
+                var formatterType = tupleFormatterType.MakeGenericType(ti.GetGenericArguments().StartsWith(resolverType));
+                return Activator.CreateInstance(formatterType);
             }
 
             return Activator.CreateInstance(typeof(FSharpResolverFormatter<,>).MakeGenericType(typeof(TTypeResolver), type));
