@@ -12,8 +12,8 @@
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
     <PackageReference Include="FSharp.Core" Version="4.1.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0-preview-20170210-02" />
-    <PackageReference Include="xunit" Version="2.2.0-rc2-build3523" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0-rc2-build1249" />
+    <PackageReference Include="xunit" Version="2.2.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.*" />
     <ProjectReference Include="..\..\src\ZeroFormatter.FSharpExtensions\ZeroFormatter.FSharpExtensions.csproj" />
     <DotNetCliToolReference Include="dotnet-compile-fsc" Version="1.0.0-preview2-020000" />
   </ItemGroup>
