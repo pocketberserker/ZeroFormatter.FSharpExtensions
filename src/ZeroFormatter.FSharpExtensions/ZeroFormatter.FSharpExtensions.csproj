@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <TargetFrameworks>netstandard1.6;net45</TargetFrameworks>
     <Authors>pocketberserker</Authors>
     <Owners>pocketberserker</Owners>
