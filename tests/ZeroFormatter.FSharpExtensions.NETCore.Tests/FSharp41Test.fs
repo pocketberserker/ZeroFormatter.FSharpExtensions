@@ -42,3 +42,38 @@ let ``struct record`` () =
   Assert.Equal(input.MyProperty1, actual.MyProperty1)
   Assert.Equal(input.MyProperty2, actual.MyProperty2)
   Assert.Equal(input.MyProperty3, actual.MyProperty3)
+
+[<Struct>]
+type TestUnion =
+  | A
+  | B of int
+  | C of int64 * float32
+
+[<Fact>]
+let ``struct union`` () =
+  let input = A
+  let xs = ZeroFormatterSerializer.Serialize(input)
+  let actual = ZeroFormatterSerializer.Deserialize<TestUnion>(xs)
+  Assert.Equal(input, actual)
+
+  let input = B 100
+  let xs = ZeroFormatterSerializer.Serialize(input)
+  let actual = ZeroFormatterSerializer.Deserialize<TestUnion>(xs)
+  Assert.Equal(input, actual)
+
+  let input = C(99999999L, -123.43f)
+  let xs = ZeroFormatterSerializer.Serialize(input)
+  let actual = ZeroFormatterSerializer.Deserialize<TestUnion>(xs)
+  Assert.Equal(input, actual)
+
+[<Fact>]
+let ``result(struct generic union)`` () =
+  let input: Result<int, int> = Ok 1
+  let xs = ZeroFormatterSerializer.Serialize(input)
+  let actual = ZeroFormatterSerializer.Deserialize<Result<int, int>>(xs)
+  Assert.Equal(input, actual)
+
+  let input: Result<int, int> = Error 2
+  let xs = ZeroFormatterSerializer.Serialize(input)
+  let actual = ZeroFormatterSerializer.Deserialize<Result<int, int>>(xs)
+  Assert.Equal(input, actual)
