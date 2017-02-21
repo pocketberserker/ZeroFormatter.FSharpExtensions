@@ -10,7 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-    <PackageReference Include="FsUnit" Version="2.3.*" />
+    <PackageReference Include="FSharp.Core" Version="4.1.*" />
+    <PackageReference Include="FsUnit" Version="3.0.0-beta1" />
     <ProjectReference Include="..\..\src\ZeroFormatter.FSharpExtensions\ZeroFormatter.FSharpExtensions.csproj" />
     <DotNetCliToolReference Include="dotnet-compile-fsc" Version="1.0.0-preview2-020000" />
   </ItemGroup>
