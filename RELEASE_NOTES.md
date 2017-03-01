@@ -1,3 +1,7 @@
+### 0.4.0 - March 1 2017
+* update ZeroFormatter 1.6.4
+* improve process
+
 ### 0.3.0 - February 22 2017
 * support FSharp.Core 4.1
 
