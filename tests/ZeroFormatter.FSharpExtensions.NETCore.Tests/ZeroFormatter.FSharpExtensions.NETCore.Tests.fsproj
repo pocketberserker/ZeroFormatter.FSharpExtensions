@@ -15,7 +15,6 @@
     <PackageReference Include="xunit" Version="2.2.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.2.*" />
     <ProjectReference Include="..\..\src\ZeroFormatter.FSharpExtensions\ZeroFormatter.FSharpExtensions.csproj" />
-    <DotNetCliToolReference Include="dotnet-compile-fsc" Version="1.0.0-preview2-020000" />
   </ItemGroup>
 
 </Project>

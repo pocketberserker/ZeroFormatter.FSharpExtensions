@@ -25,7 +25,7 @@ namespace ZeroFormatter.Formatters
         {
             get
             {
-                return false;
+                return resolver.IsUseBuiltinSerializer;
             }
         }
 
@@ -132,33 +132,7 @@ namespace ZeroFormatter.Formatters
                 return Activator.CreateInstance(formatterType);
             }
 
-            return Activator.CreateInstance(typeof(FSharpResolverFormatter<,>).MakeGenericType(typeof(TTypeResolver), type));
-        }
-    }
-
-    internal class FSharpResolverFormatter<TTypeResolver, T> : Formatter<FSharpResolver<TTypeResolver>, T>
-        where TTypeResolver : ITypeResolver, new()
-    {
-        private Formatter<TTypeResolver, T> innerFormatter;
-
-        public FSharpResolverFormatter()
-        {
-            this.innerFormatter = Formatter<TTypeResolver, T>.Default;
-        }
-
-        public override T Deserialize(ref byte[] bytes, int offset, DirtyTracker tracker, out int byteSize)
-        {
-            return this.innerFormatter.Deserialize(ref bytes, offset, tracker, out byteSize);
-        }
-
-        public override int? GetLength()
-        {
-            return this.innerFormatter.GetLength();
-        }
-
-        public override int Serialize(ref byte[] bytes, int offset, T value)
-        {
-            return this.innerFormatter.Serialize(ref bytes, offset, value);
+            return null;
         }
     }
 }

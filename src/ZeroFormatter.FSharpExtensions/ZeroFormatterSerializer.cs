@@ -83,14 +83,7 @@ namespace ZeroFormatter.FSharp
 
         public static T Deserialize<T>(byte[] bytes)
         {
-            // TODO: fix bug https://github.com/neuecc/ZeroFormatter/blob/1.6.2/src/ZeroFormatter/ZeroFormatterSerializer.cs#L333
-            //return ZeroFormatter.ZeroFormatterSerializer.CustomSerializer<FSharpResolver<TTypeResolver>>.Deserialize<T>(bytes);
-            var formatter = Formatter<FSharpResolver<TTypeResolver>, T>.Default;
-            if (formatter == null) throw new System.InvalidOperationException("Formatter not found, " + typeof(T).Name);
-
-            var tracker = formatter.NoUseDirtyTracker ? DirtyTracker.NullTracker : new DirtyTracker();
-            int _;
-            return formatter.Deserialize(ref bytes, 0, tracker, out _);
+            return ZeroFormatter.ZeroFormatterSerializer.CustomSerializer<FSharpResolver<TTypeResolver>>.Deserialize<T>(bytes);
         }
 
         public static T Deserialize<T>(byte[] bytes, int offset)
