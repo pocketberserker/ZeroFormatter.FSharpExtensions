@@ -8,7 +8,8 @@ matrix:
       mono: latest
       dotnet: 1.0.1
 
-before_script:
-  - chmod +x ./build.sh
 script:
-  - ./build.sh
+  - dotnet --info
+  - dotnet restore
+  - dotnet test ./tests/ZeroFormatter.FSharpExtensions.NETCore.Tests/ZeroFormatter.FSharpExtensions.NETCore.Tests.fsproj
+
