@@ -1,3 +1,6 @@
+### 0.5.0 - March 20 2017
+* avoid boxing
+
 ### 0.4.0 - March 1 2017
 * update ZeroFormatter 1.6.4
 * improve process
