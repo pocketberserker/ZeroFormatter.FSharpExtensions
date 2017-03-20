@@ -52,7 +52,7 @@ namespace ZeroFormatter.Extensions
             var formattersInField = new List<UnionSerializationInfo>();
             foreach(var item in unionCases)
             {
-                formattersInField.Add(UnionSerializationInfo.CreateOrNull(buildType, resolverType, typeBuilder, item));
+                formattersInField.Add(UnionSerializationInfo.Create(buildType, resolverType, typeBuilder, item));
             }
 
             // .ctor
@@ -359,7 +359,7 @@ namespace ZeroFormatter.Extensions
 
         UnionSerializationInfo() { }
 
-        public static UnionSerializationInfo CreateOrNull(Type type, Type resolverType, TypeBuilder typeBuilder, Microsoft.FSharp.Reflection.UnionCaseInfo caseInfo)
+        public static UnionSerializationInfo Create(Type type, Type resolverType, TypeBuilder typeBuilder, Microsoft.FSharp.Reflection.UnionCaseInfo caseInfo)
         {
             var ti = type.GetTypeInfo();
 
