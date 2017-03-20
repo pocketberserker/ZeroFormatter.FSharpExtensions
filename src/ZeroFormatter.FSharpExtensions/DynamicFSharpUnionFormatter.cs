@@ -49,11 +49,10 @@ namespace ZeroFormatter.Extensions
                 TypeAttributes.Public,
                 typeof(Formatter<,>).MakeGenericType(resolverType, buildType));
 
-            var formattersInField = new List<Tuple<int, FieldBuilder, UnionSerializationInfo>>();
+            var formattersInField = new List<UnionSerializationInfo>();
             foreach(var item in unionCases)
             {
-                var unionInfo = typeBuilder.DefineField("<>" + item.Name + "UnionCaseInfo", typeof(Microsoft.FSharp.Reflection.UnionCaseInfo), FieldAttributes.Private | FieldAttributes.InitOnly);
-                formattersInField.Add(Tuple.Create(item.Tag, unionInfo, UnionSerializationInfo.CreateOrNull(buildType, resolverType, typeBuilder, item)));
+                formattersInField.Add(UnionSerializationInfo.CreateOrNull(buildType, resolverType, typeBuilder, item));
             }
 
             // .ctor
@@ -65,37 +64,16 @@ namespace ZeroFormatter.Extensions
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Call, typeof(Formatter<,>).MakeGenericType(resolverType, buildType).GetTypeInfo().GetConstructor(Type.EmptyTypes));
 
-                il.DeclareLocal(typeof(Microsoft.FSharp.Reflection.UnionCaseInfo []));
-
-                il.Emit(OpCodes.Ldtoken, buildType);
-                il.EmitCall(OpCodes.Call, typeof(Type).GetTypeInfo().GetMethod("GetTypeFromHandle"), null);
-                il.Emit(OpCodes.Ldnull); // equal FSharpOpion<T>.None
-                il.Emit(
-                    OpCodes.Call,
-#if NETSTANDARD
-                    FSharpType.getUnionCases
-#else
-                    typeof(Microsoft.FSharp.Reflection.FSharpType).GetTypeInfo().GetMethod("GetUnionCases", new Type[] { typeof(Type), typeof(FSharpOption<BindingFlags>)})
-#endif
-                );
-                il.Emit(OpCodes.Stloc_0);
-
                 for (var i = 0; i < formattersInField.Count; i++)
                 {
                     var item = formattersInField[i];
 
-                    foreach(var member in item.Item3.Members)
+                    foreach(var member in item.Members)
                     {
                         il.Emit(OpCodes.Ldarg_0);
                         il.Emit(OpCodes.Call, member.Formatter.FieldType.GetTypeInfo().GetProperty("Default").GetGetMethod());
                         il.Emit(OpCodes.Stfld, member.Formatter);
                     }
-
-                    il.Emit(OpCodes.Ldarg_0);
-                    il.Emit(OpCodes.Ldloc_0);
-                    il.Emit(OpCodes.Ldc_I4, i);
-                    il.Emit(OpCodes.Ldelem_Ref);
-                    il.Emit(OpCodes.Stfld, item.Item2);
                 }
 
                 il.Emit(OpCodes.Ret);
@@ -177,7 +155,7 @@ namespace ZeroFormatter.Extensions
                         il.Emit(OpCodes.Ldarg_3);
                     }
                     il.Emit(OpCodes.Call, tag);
-                    il.Emit(OpCodes.Ldc_I4, unionCase.Item1);
+                    il.Emit(OpCodes.Ldc_I4, unionCase.Tag);
                     il.Emit(OpCodes.Ceq);
                     il.Emit(OpCodes.Brfalse_S, ifElseLabels[i + 1]);
 
@@ -185,12 +163,12 @@ namespace ZeroFormatter.Extensions
                     il.Emit(OpCodes.Call, intFormatterTypeInfo.GetProperty("Default").GetGetMethod());
                     il.Emit(OpCodes.Ldarg_1);
                     il.Emit(OpCodes.Ldarg_2);
-                    il.Emit(OpCodes.Ldc_I4, unionCase.Item1);
+                    il.Emit(OpCodes.Ldc_I4, unionCase.Tag);
                     il.Emit(OpCodes.Callvirt, intFormatterTypeInfo.GetMethod("Serialize"));
                     il.Emit(OpCodes.Add);
                     il.Emit(OpCodes.Starg_S, (byte)2);
 
-                    foreach(var item in unionCase.Item3.Members)
+                    foreach(var item in unionCase.Members)
                     {
                         il.Emit(OpCodes.Ldarg_2);
                         il.Emit(OpCodes.Ldarg_0);
@@ -320,14 +298,14 @@ namespace ZeroFormatter.Extensions
                     if (i != 0) il.MarkLabel(ifElseLabels[i]);
 
                     il.Emit(OpCodes.Ldloc_1);
-                    il.Emit(OpCodes.Ldc_I4, unionCase.Item1);
+                    il.Emit(OpCodes.Ldc_I4, unionCase.Tag);
                     il.Emit(OpCodes.Ceq);
                     il.Emit(OpCodes.Brfalse_S, ifElseLabels[i + 1]);
 
                     il.Emit(OpCodes.Ldarg_S, (byte)4);
                     il.Emit(OpCodes.Ldc_I4_0);
                     il.Emit(OpCodes.Stind_I4);
-                    foreach (var item in unionCase.Item3.Members)
+                    foreach (var item in unionCase.Members)
                     {
                         il.Emit(OpCodes.Ldarg_0);
                         il.Emit(OpCodes.Ldfld, item.Formatter);
@@ -348,7 +326,7 @@ namespace ZeroFormatter.Extensions
                         il.Emit(OpCodes.Stind_I4);
                     }
 
-                    il.Emit(OpCodes.Call, unionCase.Item3.NewMethod);
+                    il.Emit(OpCodes.Call, unionCase.NewMethod);
 
                     il.Emit(OpCodes.Stloc_2);
                     il.Emit(OpCodes.Br, endLabel);
@@ -375,6 +353,7 @@ namespace ZeroFormatter.Extensions
 
     internal class UnionSerializationInfo
     {
+        public int Tag { get; set; }
         public MethodInfo NewMethod { get; set; }
         public EmittableMember[] Members { get; set; }
 
@@ -411,6 +390,7 @@ namespace ZeroFormatter.Extensions
 
             return new UnionSerializationInfo
             {
+                Tag = caseInfo.Tag,
                 NewMethod = method,
                 Members = members.ToArray()
             };
