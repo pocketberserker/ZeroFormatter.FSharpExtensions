@@ -49,17 +49,11 @@ namespace ZeroFormatter.Extensions
                 TypeAttributes.Public,
                 typeof(Formatter<,>).MakeGenericType(resolverType, buildType));
 
-            var formattersInField = new List<Tuple<int, FieldBuilder, List<Tuple<PropertyInfo, FieldBuilder>>>>();
+            var formattersInField = new List<Tuple<int, FieldBuilder, UnionSerializationInfo>>();
             foreach(var item in unionCases)
             {
-                var fs = new List<Tuple<PropertyInfo, FieldBuilder>>();
-                foreach(var info in item.GetFields())
-                {
-                    var field = typeBuilder.DefineField("<>" + item.Name + info.Name + "Formatter", typeof(Formatter<,>).MakeGenericType(resolverType, info.PropertyType), FieldAttributes.Private | FieldAttributes.InitOnly);
-                    fs.Add(Tuple.Create(info, field));
-                }
                 var unionInfo = typeBuilder.DefineField("<>" + item.Name + "UnionCaseInfo", typeof(Microsoft.FSharp.Reflection.UnionCaseInfo), FieldAttributes.Private | FieldAttributes.InitOnly);
-                formattersInField.Add(Tuple.Create(item.Tag, unionInfo, fs));
+                formattersInField.Add(Tuple.Create(item.Tag, unionInfo, UnionSerializationInfo.CreateOrNull(buildType, resolverType, typeBuilder, item)));
             }
 
             // .ctor
@@ -90,11 +84,11 @@ namespace ZeroFormatter.Extensions
                 {
                     var item = formattersInField[i];
 
-                    foreach(var field in item.Item3)
+                    foreach(var member in item.Item3.Members)
                     {
                         il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Call, field.Item2.FieldType.GetTypeInfo().GetProperty("Default").GetGetMethod());
-                        il.Emit(OpCodes.Stfld, field.Item2);
+                        il.Emit(OpCodes.Call, member.Formatter.FieldType.GetTypeInfo().GetProperty("Default").GetGetMethod());
+                        il.Emit(OpCodes.Stfld, member.Formatter);
                     }
 
                     il.Emit(OpCodes.Ldarg_0);
@@ -196,11 +190,11 @@ namespace ZeroFormatter.Extensions
                     il.Emit(OpCodes.Add);
                     il.Emit(OpCodes.Starg_S, (byte)2);
 
-                    foreach(var item in unionCase.Item3)
+                    foreach(var item in unionCase.Item3.Members)
                     {
                         il.Emit(OpCodes.Ldarg_2);
                         il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldfld, item.Item2);
+                        il.Emit(OpCodes.Ldfld, item.Formatter);
                         il.Emit(OpCodes.Ldarg_1);
                         il.Emit(OpCodes.Ldarg_2);
                         if(ti.IsValueType)
@@ -211,8 +205,8 @@ namespace ZeroFormatter.Extensions
                         {
                             il.Emit(OpCodes.Ldarg_3);
                         }
-                        il.Emit(OpCodes.Callvirt, item.Item1.GetGetMethod());
-                        il.Emit(OpCodes.Callvirt, item.Item2.FieldType.GetTypeInfo().GetMethod("Serialize"));
+                        il.Emit(OpCodes.Callvirt, item.PropertyInfo.GetGetMethod());
+                        il.Emit(OpCodes.Callvirt, item.Formatter.FieldType.GetTypeInfo().GetMethod("Serialize"));
                         il.Emit(OpCodes.Add);
                         il.Emit(OpCodes.Starg_S, (byte)2);
                     }
@@ -259,27 +253,11 @@ namespace ZeroFormatter.Extensions
                     buildType,
                     new[] { typeof(byte[]).MakeByRefType(), typeof(int), typeof(DirtyTracker), typeof(int).MakeByRefType() });
 
-                var makeUnion =
-#if NETSTANDARD
-                    typeof(Microsoft.FSharp.Reflection.FSharpReflectionExtensions).GetTypeInfo()
-                        .GetMethod("FSharpValue.MakeUnion.Static");
-#else
-                    typeof(Microsoft.FSharp.Reflection.FSharpValue).GetTypeInfo().GetMethod(
-                        "MakeUnion",
-                        new Type[] {
-                            typeof(Microsoft.FSharp.Reflection.UnionCaseInfo),
-                            typeof(object []),
-                            typeof(FSharpOption<BindingFlags>)
-                        }
-                    );
-#endif
-
                 var il = method.GetILGenerator();
 
                 il.DeclareLocal(typeof(int)); // size
                 il.DeclareLocal(typeof(int)); // Tag
                 il.DeclareLocal(buildType);   // T
-                il.DeclareLocal(typeof(object []));
 
                 var labelA = il.DefineLabel();
 
@@ -346,28 +324,18 @@ namespace ZeroFormatter.Extensions
                     il.Emit(OpCodes.Ceq);
                     il.Emit(OpCodes.Brfalse_S, ifElseLabels[i + 1]);
 
-                    il.Emit(OpCodes.Ldc_I4, unionCase.Item3.Count);
-                    il.Emit(OpCodes.Newarr, typeof(object));
-                    il.Emit(OpCodes.Stloc_3);
-
                     il.Emit(OpCodes.Ldarg_S, (byte)4);
                     il.Emit(OpCodes.Ldc_I4_0);
                     il.Emit(OpCodes.Stind_I4);
-                    for(var j = 0; j < unionCase.Item3.Count; j++)
+                    foreach (var item in unionCase.Item3.Members)
                     {
-                        var item = unionCase.Item3[j];
-
-                        il.Emit(OpCodes.Ldloc_3);
-                        il.Emit(OpCodes.Ldc_I4, j);
                         il.Emit(OpCodes.Ldarg_0);
-                        il.Emit(OpCodes.Ldfld, item.Item2);
+                        il.Emit(OpCodes.Ldfld, item.Formatter);
                         il.Emit(OpCodes.Ldarg_1);
                         il.Emit(OpCodes.Ldarg_2);
                         il.Emit(OpCodes.Ldarg_3);
                         il.Emit(OpCodes.Ldloca_S, (byte)0);
-                        il.Emit(OpCodes.Callvirt, item.Item2.FieldType.GetTypeInfo().GetMethod("Deserialize"));
-                        il.Emit(OpCodes.Box, item.Item1.PropertyType);
-                        il.Emit(OpCodes.Stelem_Ref);
+                        il.Emit(OpCodes.Callvirt, item.Formatter.FieldType.GetTypeInfo().GetMethod("Deserialize"));
                         il.Emit(OpCodes.Ldarg_2);
                         il.Emit(OpCodes.Ldloc_0);
                         il.Emit(OpCodes.Add);
@@ -380,12 +348,7 @@ namespace ZeroFormatter.Extensions
                         il.Emit(OpCodes.Stind_I4);
                     }
 
-                    il.Emit(OpCodes.Ldarg_0);
-                    il.Emit(OpCodes.Ldfld, unionCase.Item2);
-                    il.Emit(OpCodes.Ldloc_3);
-                    il.Emit(OpCodes.Ldnull); // equal FSharpOpion<T>.None
-                    il.Emit(OpCodes.Call, makeUnion);
-                    il.Emit(OpCodes.Unbox_Any, buildType);
+                    il.Emit(OpCodes.Call, unionCase.Item3.NewMethod);
 
                     il.Emit(OpCodes.Stloc_2);
                     il.Emit(OpCodes.Br, endLabel);
@@ -407,6 +370,63 @@ namespace ZeroFormatter.Extensions
             }
 
             return typeBuilder.CreateTypeInfo();
+        }
+    }
+
+    internal class UnionSerializationInfo
+    {
+        public MethodInfo NewMethod { get; set; }
+        public EmittableMember[] Members { get; set; }
+
+        UnionSerializationInfo() { }
+
+        public static UnionSerializationInfo CreateOrNull(Type type, Type resolverType, TypeBuilder typeBuilder, Microsoft.FSharp.Reflection.UnionCaseInfo caseInfo)
+        {
+            var ti = type.GetTypeInfo();
+
+            var members = new List<EmittableMember>();
+
+            foreach (var item in caseInfo.GetFields())
+            {
+                var field = typeBuilder.DefineField("<>" + item.Name + item.Name + "Formatter", typeof(Formatter<,>).MakeGenericType(resolverType, item.PropertyType), FieldAttributes.Private | FieldAttributes.InitOnly);
+                var member = new EmittableMember
+                {
+                    PropertyInfo = item,
+                    Formatter = field
+                };
+                members.Add(member);
+            }
+
+            MethodInfo method;
+            var methodParameters = new List<EmittableMember>();
+
+            if (caseInfo.GetFields().Any())
+            {
+                method = ti.GetMethod("New" + caseInfo.Name, BindingFlags.Static | BindingFlags.Public);
+            }
+            else
+            {
+                method = ti.GetProperty(caseInfo.Name, BindingFlags.Public | BindingFlags.Static).GetGetMethod();
+            }
+
+            return new UnionSerializationInfo
+            {
+                NewMethod = method,
+                Members = members.ToArray()
+            };
+        }
+
+        public class EmittableMember
+        {
+            public Type Type { get { return PropertyInfo.PropertyType; } }
+            public PropertyInfo PropertyInfo { get; set; }
+
+            public FieldBuilder Formatter { get; set; }
+
+            public void EmitLoadValue(ILGenerator il)
+            {
+                il.Emit(OpCodes.Call, PropertyInfo.GetGetMethod());
+            }
         }
     }
 }
