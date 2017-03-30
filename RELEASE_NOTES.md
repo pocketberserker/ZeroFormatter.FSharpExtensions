@@ -1,3 +1,7 @@
+### 0.6.0 - March 30 2017
+* update dependencies(FSharp.Core 4.1.2)
+* disable implicit framework references
+
 ### 0.5.0 - March 20 2017
 * avoid boxing
 
